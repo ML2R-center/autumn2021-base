@@ -17,11 +17,11 @@ class Action:
 
 
     
-    def complies_with_box(self, state):
+    def complies_with_box(self, state): # checks whether rct is in bounds
         test = self.rct.place_at(self.pnt)
         return state.box.contains_rectangle(test)
 
-    def complies_with_box_content(self, state):
+    def complies_with_box_content(self, state): # checks that no rcts in box overlap
         test = self.rct.place_at(self.pnt)
         for rct in state.rcts_clsd:
             if test.overlap(rct) > 0: return False
@@ -31,11 +31,6 @@ class Action:
         return self.complies_with_box(state) and \
                self.complies_with_box_content(state)
 
-
-
-    
-
-        
     def apply_to(self, state):
         rcts_clsd = list(state.rcts_clsd) # recall that list([...])
         rcts_open = list(state.rcts_open) # creates a copy of [...]
@@ -51,11 +46,16 @@ class Action:
 
         rct_new = rct.place_at(pnt)
         
-        pnts_open.extend(Action.new_placing_points(rct_new, state))
+        pnts_open.extend(Action.new_placing_points(rct_new, state)) # TODO: needed? not sure if blog entry code runs if this line is included
         rcts_clsd.append(rct_new)
         
         return State(rcts_clsd, rcts_open, pnts_open, box)
 
+
+
+    def rot_rct(self):
+        # forward method for 2DRct.rotate90()
+        self.rct.rotate90()
 
     
     @staticmethod
@@ -110,7 +110,7 @@ class Action:
                     if r.get_corner('br') == pnt_tl:
                         touches_tr = True
                     if r.get_corner('tr') == pnt_tl:
-                        touches_tl = True
+                        touches_tl = True ## TODO: bug? maybe this broke 2DRct.contains_point()?
                 if touches_br and touches_tr:
                     pnts_new.append(pnt_tl)
             
