@@ -15,6 +15,7 @@ class Rectangle2D:
         self.h  = int(h)             # height
         self.a  = w*h                # area
         self.n  = n                  # number / name
+        self.color = None
         
         
     def __eq__(self, other):
@@ -130,6 +131,27 @@ class Rectangle2D:
             return (xtr-xbl) * (ytr-ybl)
         else:
             return 0
+
+
+    def interior_contains_point(self, pn):
+        # same as contains_point but < instead of <= in n <= max check
+        # does not look right, but when implementing the simple heuristics and plotting the results
+        # some bins were plotted out of bounds, with this changes results were consistently good
+        # need to find out why
+        x, y = pn.get_coord()
+        xmin, ymin = self.bl.get_coord()
+        xmax, ymax = self.tr.get_coord()
+        return xmin <= x < xmax and  ymin <= y < ymax # this should be wrong
+
+    def rotate90(self):
+        # bl stays the same
+        self.w, self.h = self.h, self.w
+
+    def set_color(self, c):
+        self.color = c
+
+    def get_color(self):
+        return self.color
 
 
 
