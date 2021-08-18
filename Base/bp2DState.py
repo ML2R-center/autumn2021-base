@@ -39,9 +39,30 @@ class State:
         #plot_packed_box(self.box, self.rcts_clsd, pnts,
         #                 cols, showBox, showGrid, delta, bgcol, fname)
 
+    def update_pnts_open(self):
+        self.pnts_open.clear()
+        for i in range(self.box.get_w()):  # go over all poinst in box
+            for j in range(self.box.get_h()):
+                pnt = Point2D(i, j)
+                pnt_free = True
+                for r in self.rcts_clsd:  # check for each placed rect in box whether point is contained
+                    if r.interior_contains_point(pnt):
+                        pnt_free = False
+                        break
+                if pnt_free:
+                    self.pnts_open.append(pnt)
+
+        # def get_x(pnt):
+        #     return min(pnt.get_x(), pnt.get_y())
+        self.pnts_open = sorted(self.pnts_open, key=lambda x: (x.coord[0], x.coord[1]))
+        return
+
+    def capacity_available(self):
+        filled_capacity = 0
+        for r in self.rcts_clsd:
+            filled_capacity += r.get_a()
+        return self.box.get_a() - filled_capacity
 
 
-
-        
 if __name__ == '__main__':
     pass
