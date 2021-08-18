@@ -1,6 +1,4 @@
 
-from bp2DPnt import *
-
 
 
 class Face2D:

@@ -1,21 +1,24 @@
 import sys
 
-sys.path.append('./Base')
 
 import random
 
-from bp2DBase import *
-from bp2DData import *
-from bp2DPlotBLOG import *
-from bp2DState import State
-from bp2DAction import Action
+from Base.bp2DBase import *
+from Base.bp2DData import *
+from Base.bp2DPlot import *
+from Base.bp2DState import Bin
+from Base.bp2DAction import Action
+
+from Base.bpUtil import *
 
 import numpy as np
 
 def example_blog(squares_only=True):
-    # [w, (br)]
+    # [w, (br)]\
+
+
     cont_size = 10
-    make_rects = lambda l: [ Rectangle2D(r[0], r[0], bl=Point2D(r[1], r[2])) for r in l]
+    make_rects = lambda l: [Box(r[0], r[0], bl=Point(r[1], r[2])) for r in l]
     rects1 = make_rects([
         [5, 0, 0], [2, 5, 0], [2, 7, 0], [1, 9, 0],
         [1, 9, 1], [1, 5, 2], [1, 6, 2], [3, 7, 2],
@@ -23,22 +26,22 @@ def example_blog(squares_only=True):
         [1, 0, 9], [1, 1, 9], [1, 2, 9], [1, 3, 9],
         [2, 4, 5], [2, 6, 5], [2, 8, 5]
     ])
-    rects1 = Rectangle2D.sort_rectangles(rects1)
-    rs1 = Rectangle2D.name_rectangles(rects1)
+    rects1 = sort_rectangles(rects1)
+    rs1 = name_rectangles(rects1)
     if squares_only:
         rects2 = make_rects([
             [5, 0, 0], [2, 5, 0], [1, 9, 0], [1, 9, 1], [2, 7, 0],
             [5, 5, 2], [3, 0, 5], [2, 3, 5], [1, 3, 7],
             [2, 0, 8], [2, 2, 8], [3, 4, 7], [3, 7, 7]
         ])
-        rects2 = Rectangle2D.sort_rectangles(rects2)
-        rs2 = Rectangle2D.name_rectangles(rects2)
+        rects2 = sort_rectangles(rects2)
+        rs2 = name_rectangles(rects2)
     else:
         rs2 = example5()
     return rs1, rs2, cont_size
 
 def make_new_container(cont_size):
-    return Rectangle2D(cont_size, cont_size)
+    return Box(cont_size, cont_size)
 
 
 def next_fit(rcts, cont_size=10):
@@ -46,7 +49,7 @@ def next_fit(rcts, cont_size=10):
     containers = []  # will be a list of states, each state contain the rectangles placed in its container
     rcts_open = rcts
     rcts_placed = []
-    current_state = State([], [], [], make_new_container(cont_size))
+    current_state = Bin([], [], [], make_new_container(cont_size))
     current_state.update_pnts_open()  # see what points are left
     i = 0
     while(i < len(rcts_open)):
@@ -59,7 +62,7 @@ def next_fit(rcts, cont_size=10):
         if not placement_success:
             current_state.rcts_open.remove(r) # dont queue rect for current container
             containers.append(current_state) # store container
-            current_state = State([], [], [], make_new_container(cont_size))
+            current_state = Bin([], [], [], make_new_container(cont_size))
 
         current_state.update_pnts_open()  # see what points are left
 
@@ -100,7 +103,7 @@ def first_fit(rcts, cont_size=10, video=False):
     rcts_open = rcts
     rcts_placed = []
     for _ in range(3):
-        current_state = State([], [], [], make_new_container(cont_size))
+        current_state = Bin([], [], [], make_new_container(cont_size))
         current_state.update_pnts_open()  # see what points are left
         containers.append(current_state)
 
@@ -125,7 +128,7 @@ def first_fit(rcts, cont_size=10, video=False):
                 bad_placement += 1 # we didnt place it in this container
                 cont.rcts_open.remove(r)
         if not placement_success:
-            new_cont = State([], [r], [], make_new_container(cont_size))
+            new_cont = Bin([], [r], [], make_new_container(cont_size))
             new_cont.update_pnts_open()
             _, new_cont = place_in_container(r, new_cont)
             new_cont.update_pnts_open()
@@ -137,12 +140,13 @@ def first_fit(rcts, cont_size=10, video=False):
 
     return containers, bad_placement
 
+
 def max_rest(rcts, cont_size=10, video=False):
     # place objet in the container with most space available
     containers = []  # will be a list of states, each state contain the rectangles placed in its container
     rcts_open = rcts
     rcts_placed = []
-    current_state = State([], [], [], make_new_container(cont_size))
+    current_state = Bin([], [], [], make_new_container(cont_size))
     current_state.update_pnts_open()  # see what points are left
     containers.append(current_state)
     i = 0
@@ -161,7 +165,7 @@ def max_rest(rcts, cont_size=10, video=False):
         else:
             bad_placements += 1
             max_cont.rcts_open.remove(r)
-            new_cont = State([], [r], [], make_new_container(cont_size))
+            new_cont = Bin([], [r], [], make_new_container(cont_size))
             new_cont.update_pnts_open()
             _, new_cont = place_in_container(r, new_cont)
             new_cont.update_pnts_open()
@@ -177,7 +181,7 @@ def best_fit(rcts, cont_size=10):
     containers = []  # will be a list of states, each state contain the rectangles placed in its container
     rcts_open = rcts
     rcts_placed = []
-    current_state = State([], [], [], make_new_container(cont_size))
+    current_state = Bin([], [], [], make_new_container(cont_size))
     current_state.update_pnts_open()  # see what points are left
     containers.append(current_state)
     i = 0
@@ -193,7 +197,7 @@ def best_fit(rcts, cont_size=10):
                 break
 
         if first_fit_idx == -1: # r didn't fit anywhere
-            new_cont = State([], [r], [], make_new_container(cont_size))
+            new_cont = Bin([], [r], [], make_new_container(cont_size))
             new_cont.update_pnts_open()
             _, new_cont = place_in_container(r, new_cont)
             new_cont.update_pnts_open()
@@ -218,15 +222,15 @@ def best_fit(rcts, cont_size=10):
     return containers
 
 def best_fit_decreasing(rcts, cont_size=10):
-    rcts = Rectangle2D.sort_rectangles(rcts)
+    rcts = sort_rectangles(rcts)
     return best_fit(rcts, cont_size)
 
 def next_fit_decreasing(rcts, cont_size=10):
-    rcts = Rectangle2D.sort_rectangles(rcts)
+    rcts = sort_rectangles(rcts)
     return next_fit(rcts, cont_size)
 
 def first_fit_decreasing(rcts, cont_size=10):
-    rcts = Rectangle2D.sort_rectangles(rcts)
+    rcts = sort_rectangles(rcts)
     return first_fit(rcts, cont_size)
 
 def random_fit(rcts, cont_size=10, n_cont=5):
@@ -234,7 +238,7 @@ def random_fit(rcts, cont_size=10, n_cont=5):
     rcts_open = rcts
     rcts_placed = []
     for _ in range(n_cont):
-        current_state = State([], [], [], make_new_container(cont_size))
+        current_state = Bin([], [], [], make_new_container(cont_size))
         current_state.update_pnts_open()  # see what points are left
         random.shuffle(current_state.pnts_open) # give the indices a good shake
         containers.append(current_state)
@@ -269,8 +273,8 @@ if __name__ == '__main__':
     random.seed(666)
     squares_only = False
     r1, r2, cont_size = example_blog(squares_only=squares_only)
-    b1, b2 = Rectangle2D(cont_size, cont_size, Point2D(0, 0)), \
-             Rectangle2D(cont_size, cont_size, Point2D(0, 0))
+    b1, b2 = Box(cont_size, cont_size, Point(0, 0)), \
+             Box(cont_size, cont_size, Point(0, 0))
     c1, c2 = sample_ml2r_colors(len(r1)), sample_ml2r_colors(len(r2))
 
     for r, c in zip(r1, c1):
@@ -278,13 +282,13 @@ if __name__ == '__main__':
     for r, c in zip(r2, c2):
         r.set_color(c)
 
-    state1 = State(r1, [], [], b1)
-    state2 = State(r2, [], [], b2)
+    state1 = Bin(r1, [], [], b1)
+    state2 = Bin(r2, [], [], b2)
 
     plt_args = {'alpha': 1., 'bgcol': ml2r_bg_light}
 
     rcts = r1+r2 # concat rectangle lists
-    Rectangle2D.name_rectangles(rcts) # names in r1, r2 overlap
+    name_rectangles(rcts) # names in r1, r2 overlap
 
     state1.plot(fname="./test/state1.png", **plt_args)
     state2.plot(fname="./test/state2.png", **plt_args)
@@ -298,9 +302,9 @@ if __name__ == '__main__':
         for r in rcts[len(r1):]:
             if random.randint(0,1):
                 r.rotate90()
-    rcts = [r.place_at(Point2D(0,0)) for r in rcts]
+    rcts = [r.place_at(Point(0, 0)) for r in rcts]
 
-    rcts_sorted = Rectangle2D.sort_rectangles(rcts)
+    rcts_sorted = sort_rectangles(rcts)
     plot_box_and_rectangles(None, rcts_sorted, fname='./test/Rsorted.png', **plt_args)
 
 

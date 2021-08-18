@@ -1,16 +1,14 @@
 
-import numpy as np
-
-from bp2DPnt import *
-from bp2DFce import *
+from .bp2DFce import Face2D
+from .bp2DPnt import Point
 
 
 
-class Rectangle2D:
+class Box:
 
-    def __init__(self, w, h, bl=Point2D(0, 0), n=None):
+    def __init__(self, w, h, bl=Point(0, 0), n=None):
         self.bl = bl                 # bottom left corner
-        self.tr = bl + Point2D(w, h) # top right corner
+        self.tr = bl + Point(w, h) # top right corner
         self.w  = int(w)             # width
         self.h  = int(h)             # height
         self.a  = w*h                # area
@@ -41,11 +39,34 @@ class Rectangle2D:
     def get_w_and_h(self):
         return (self.w, self.h)
 
+    def contains_point(self, pnt):
+        x, y = pnt.get_coord()
+        xmin, ymin = self.bl.get_coord()
+        xmax, ymax = self.tr.get_coord()
+        return xmin <= x <= xmax and ymin <= y <= ymax
+
+    def contains_rectangle(self, other):
+        xmins, ymins = self.bl.get_coord()
+        xmaxs, ymaxs = self.tr.get_coord()
+        xmino, ymino = other.bl.get_coord()
+        xmaxo, ymaxo = other.tr.get_coord()
+        return xmins <= xmino and \
+               xmaxs >= xmaxo and \
+               ymins <= ymino and \
+               ymaxs >= ymaxo
+
+    def touches_rectangle(self, other):
+        for corner in other.get_corner_list():
+            if self.contains_point(corner):
+                return True
+        return False
+
+####
     def get_corner(self, cname):
         if cname == 'bl': return self.bl
         if cname == 'tr': return self.tr
-        if cname == 'br': return self.bl + Point2D(self.w, 0)
-        if cname == 'tl': return self.bl + Point2D(0, self.h)
+        if cname == 'br': return self.bl + Point(self.w, 0)
+        if cname == 'tl': return self.bl + Point(0, self.h)
 
     def get_corner_list(self):
         return [self.get_corner(cname) for cname in ['bl','br','tr','tl']]
@@ -64,60 +85,13 @@ class Rectangle2D:
     def get_face_list(self):
         return [self.get_face(fname) for fname in ['b','r','t','l']]
 
-
-    
-    def contains_point(self, pnt):
-        x, y = pnt.get_coord()
-        xmin, ymin = self.bl.get_coord()
-        xmax, ymax = self.tr.get_coord()
-        return xmin <= x <= xmax and  ymin <= y <= ymax
-
-    def contains_rectangle(self, other):
-        xmins, ymins = self.bl.get_coord()
-        xmaxs, ymaxs = self.tr.get_coord()
-        xmino, ymino = other.bl.get_coord()
-        xmaxo, ymaxo = other.tr.get_coord()
-        return xmins <= xmino and \
-            xmaxs >= xmaxo and \
-            ymins <= ymino and \
-            ymaxs >= ymaxo 
-
-    def touches_rectangle(self, other):
-        for corner in other.get_corner_list():
-            if self.contains_point(corner):
-                return True
-        return False
-
-
-    # def touches_point(self, pnt):
-    #     if (self.bl.x == pnt.x or self.tr.x == pnt.x) and \
-    #        (self.bl.y <= pnt.y <= self.tr.y):
-    #         return True
-    #     if (self.bl.y == pnt.y or self.tr.y == pnt.y) and \
-    #        (self.bl.x <= pnt.x <= self.tr.x):
-    #         return True
-    #     return False
-
-    # def touches_rectangle(self, other):
-    #     for pnt in other.get_corners():
-    #         if self.touches_point(pnt):
-    #             return True
-    #     return False
-    
-
-
-
     
     def place_at(self, pnt):
-        return Rectangle2D(self.w, self.h, pnt, self.n)
+        return Box(self.w, self.h, pnt, self.n)
     
     def shift_by(self, vec):
-        return self.place_at(self.bl + Point2D(*vec))
-    
+        return self.place_at(self.bl + Point(*vec))
 
-
-
-    
     def overlap(self, other):
         xmins, ymins = self.bl.get_coord()
         xmaxs, ymaxs = self.tr.get_coord()
@@ -155,41 +129,35 @@ class Rectangle2D:
 
 
 
-    @staticmethod
-    def area_of_rectangles(rcts):
-        return np.sum([rct.a for rct in rcts]) if rcts else 0
+    # @staticmethod
+    # def area_of_rectangles(rcts):
+    #     return np.sum([rct.a for rct in rcts]) if rcts else 0
+    #
+    # @staticmethod
+    # def x_extension_of_rectangles(rcts):
+    #     return np.max([rct.tr.get_x() for rct in rcts]) if rcts else 0
+    #
+    # @staticmethod
+    # def y_extension_of_rectangles(rcts):
+    #     return np.max([rct.tr.get_y() for rct in rcts]) if rcts else 0
+    #
+    # @staticmethod
+    # def bounding_box_of_rectangles(rcts):
+    #     if not rcts:
+    #         return Box(0, 0)
+    #     xbl = np.min([rct.bl.get_x() for rct in rcts])
+    #     ybl = np.min([rct.bl.get_y() for rct in rcts])
+    #     xtr = np.max([rct.tr.get_x() for rct in rcts])
+    #     ytr = np.max([rct.tr.get_y() for rct in rcts])
+    #     return Box(xtr - xbl, ytr - ybl, Point(xbl, ybl))
 
-    @staticmethod
-    def x_extension_of_rectangles(rcts):
-        return np.max([rct.tr.get_x() for rct in rcts]) if rcts else 0
-        
-    @staticmethod
-    def y_extension_of_rectangles(rcts):
-        return np.max([rct.tr.get_y() for rct in rcts]) if rcts else 0
-    
-    @staticmethod
-    def bounding_box_of_rectangles(rcts):
-        if not rcts:
-            return Rectangle2D(0,0) 
-        xbl = np.min([rct.bl.get_x() for rct in rcts])
-        ybl = np.min([rct.bl.get_y() for rct in rcts])
-        xtr = np.max([rct.tr.get_x() for rct in rcts])
-        ytr = np.max([rct.tr.get_y() for rct in rcts])
-        return Rectangle2D(xtr-xbl, ytr-ybl, Point2D(xbl, ybl))
 
 
-
-    @staticmethod
-    def sort_rectangles(rcts):
-        def get_a(rct):
-            return rct.a
-        return (sorted(rcts, key=get_a)[::-1])
-
-    @staticmethod
-    def name_rectangles(rcts):
-        for i, rct in enumerate(rcts):
-            rct.n = i
-        return rcts
+    # @staticmethod
+    # def sort_rectangles(rcts):
+    #     def get_a(rct):
+    #         return rct.a
+    #     return (sorted(rcts, key=get_a)[::-1])
 
 
     

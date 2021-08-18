@@ -1,6 +1,5 @@
 
-from bp2DBase import *
-from bp2DState import *
+from .bp2DState import *
 
 
 
@@ -49,7 +48,7 @@ class Action:
         pnts_open.extend(Action.new_placing_points(rct_new, state)) # TODO: needed? not sure if blog entry code runs if this line is included
         rcts_clsd.append(rct_new)
         
-        return State(rcts_clsd, rcts_open, pnts_open, box)
+        return Bin(rcts_clsd, rcts_open, pnts_open, box)
 
 
 

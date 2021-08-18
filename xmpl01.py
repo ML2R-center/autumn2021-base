@@ -8,9 +8,9 @@ import sys
 
 sys.path.append('./Base')
 
-from bp2DBase import * # basic data types (classes)
-from bp2DData import * # examples of listes of rectangles
-from bp2DPlot import * # functions for plotting / graphical output
+from Base.bp2DBase import * # basic data types (classes)
+from Base.bp2DData import * # examples of listes of rectangles
+from Base.bp2DPlot import * # functions for plotting / graphical output
 
 
 
@@ -19,7 +19,7 @@ from bp2DPlot import * # functions for plotting / graphical output
 if __name__ == '__main__':
     # define a box (width 10, height 10) to be packed
     # data type 'Rectangle2D' is defined in './Base/bp2DRct.py'
-    BOX = Rectangle2D(10, 10, Point2D(0, 0))
+    BOX = Box(10, 10, Point(0, 0))
 
     
     # get a list of (manually packed) rectangles

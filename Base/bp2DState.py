@@ -1,13 +1,11 @@
 
-import itertools
-
-from bp2DBase import *
-from bp2DPlot import *
+from .bp2DPlot import *
+from .bpUtil import *
 
 
 
 
-class State:
+class Bin:
 
     def __init__(self, rcts_clsd, rcts_open, pnts_open, box):
         self.rcts_clsd = rcts_clsd  # list of rectangles already placed
@@ -15,35 +13,17 @@ class State:
         self.pnts_open = pnts_open  # list of rectangle placing points
         self.box       = box        # box, i.e. rectangle, to be packed 
 
-        
     def copy(self):
-        return State(list(self.rcts_clsd),
-                     list(self.rcts_open),
-                     list(self.pnts_open),
-                     self.box)
-
-    
-    
-    def plot(self, showOpen=False, showPoints=True,
-             showBox=True, showGrid=False,
-             cols=None, delta=0.1, bgcol='w', fname=None):
-
-        rcts_inside  = self.rcts_clsd
-        rcts_outside = self.rcts_open if showOpen else []
-        pnts         = self.pnts_open if showPoints else []
-        
-        cols = compute_colors(len(self.rcts_clsd) + len(self.rcts_open))
-
-        plot_packing_state(self.box, rcts_inside, rcts_outside, pnts, cols,
-                           showBox, showGrid, delta, bgcol, fname)
-        #plot_packed_box(self.box, self.rcts_clsd, pnts,
-        #                 cols, showBox, showGrid, delta, bgcol, fname)
+        return Bin(list(self.rcts_clsd),
+                   list(self.rcts_open),
+                   list(self.pnts_open),
+                   self.box)
 
     def update_pnts_open(self):
         self.pnts_open.clear()
         for i in range(self.box.get_w()):  # go over all poinst in box
             for j in range(self.box.get_h()):
-                pnt = Point2D(i, j)
+                pnt = Point(i, j)
                 pnt_free = True
                 for r in self.rcts_clsd:  # check for each placed rect in box whether point is contained
                     if r.interior_contains_point(pnt):
@@ -62,6 +42,39 @@ class State:
         for r in self.rcts_clsd:
             filled_capacity += r.get_a()
         return self.box.get_a() - filled_capacity
+
+
+    def plot(self, showOpen=False, showPoints=True,
+             showBox=True, showGrid=False,
+             cols=None, delta=0.1, bgcol='w', fname=None, alpha=0.25):
+
+        rcts_inside  = self.rcts_clsd
+        rcts_outside = self.rcts_open if showOpen else []
+        pnts         = self.pnts_open if showPoints else []
+
+        if cols is None:
+            cols = compute_colors(len(self.rcts_clsd) + len(self.rcts_open))
+
+        plot_packing_state(self.box, rcts_inside, rcts_outside, pnts, cols,
+                           showBox, showGrid, delta, bgcol, fname, alpha=alpha)
+
+
+
+    # def plot(self, showOpen=False, showPoints=True,
+    #          showBox=True, showGrid=False,
+    #          cols=None, delta=0.1, bgcol='w', fname=None):
+    #
+    #     rcts_inside = self.rcts_clsd
+    #     rcts_outside = self.rcts_open if showOpen else []
+    #     pnts = self.pnts_open if showPoints else []
+    #
+    #     cols = compute_colors(len(self.rcts_clsd) + len(self.rcts_open))
+    #
+    #     plot_packing_state(self.box, rcts_inside, rcts_outside, pnts, cols,
+    #                        showBox, showGrid, delta, bgcol, fname)
+    #     # plot_packed_box(self.box, self.rcts_clsd, pnts,
+    #     #                 cols, showBox, showGrid, delta, bgcol, fname)
+
 
 
 if __name__ == '__main__':

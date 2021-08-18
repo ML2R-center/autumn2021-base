@@ -1,11 +1,9 @@
 
-from bp2DPnt import *
-from bp2DFce import *
-from bp2DRct import *
+from .bp2DRct import *
 
 
 
-BOX = Rectangle2D(10, 10, Point2D(0, 0))
+BOX = Box(10, 10, Point(0, 0))
 
 
 

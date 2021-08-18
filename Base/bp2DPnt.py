@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-class Point2D:
+class Point:
 
     def __init__(self, x, y):
         self.coord = np.array([x, y]).astype('int')
@@ -20,7 +20,7 @@ class Point2D:
 
 
     def __add__(self, other):
-        return Point2D(*(self.coord + other.coord))
+        return Point(*(self.coord + other.coord))
 
 
     

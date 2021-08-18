@@ -8,16 +8,16 @@ import sys
 
 sys.path.append('./Base')
 
-from bp2DBase import * 
-from bp2DData import * 
-from bp2DPlot import * 
+from Base.bp2DBase import *
+from Base.bp2DData import *
+from Base.bp2DPlot import *
 
 
 
 
 
 if __name__ == '__main__':
-    BOX = Rectangle2D(10, 10, Point2D(0, 0))
+    BOX = Box(10, 10, Point(0, 0))
     
     examples = [example1(), example2(), example3(),
                 example4(), example5(), example6()]
