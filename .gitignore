@@ -1,4 +1,5 @@
 __pycache__
 .idea/*
 *.png
-vis/*
+*vis/*
+/data/
