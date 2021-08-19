@@ -22,7 +22,11 @@ class Point:
     def __add__(self, other):
         return Point(*(self.coord + other.coord))
 
+    def __hash__(self):
+        return hash((self.coord[0], self.coord[1]))
 
+    def copy(self):
+        return Point(self.coord[0], self.coord[1])
     
     def get_coord(self):
         return self.coord

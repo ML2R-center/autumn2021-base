@@ -7,75 +7,59 @@ from .bpUtil import *
 
 class Bin:
 
-    def __init__(self, rcts_clsd, rcts_open, pnts_open, box):
-        self.rcts_clsd = rcts_clsd  # list of rectangles already placed
-        self.rcts_open = rcts_open  # list of rectangles still to be placed
-        self.pnts_open = pnts_open  # list of rectangle placing points
-        self.box       = box        # box, i.e. rectangle, to be packed 
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
+        self.area = w*h        # box, i.e. rectangle, to be packed
+        self.pnts_open =  None
+        self.init_pnts_open()  # list of rectangles still to be placed
+        self.boxes_stored = []
+        self.bounding_box = Box(w,h, Point(0,0))
 
-    def copy(self):
-        return Bin(list(self.rcts_clsd),
-                   list(self.rcts_open),
-                   list(self.pnts_open),
-                   self.box)
+    def init_pnts_open(self):
+        # self.pnts_open = {Point(i, j) for i in range(self.w) for j in range(self.h)}
+        self.pnts_open = [Point(i, j) for i in range(self.w) for j in range(self.h)]
 
-    def update_pnts_open(self):
-        self.pnts_open.clear()
-        for i in range(self.box.get_w()):  # go over all poinst in box
-            for j in range(self.box.get_h()):
-                pnt = Point(i, j)
-                pnt_free = True
-                for r in self.rcts_clsd:  # check for each placed rect in box whether point is contained
-                    if r.interior_contains_point(pnt):
-                        pnt_free = False
-                        break
-                if pnt_free:
-                    self.pnts_open.append(pnt)
+    def place_box_at_pnt(self, box: Box, pnt: Point) -> bool:
+        if pnt not in self.pnts_open:
+            return False
+        if box.get_a() > len(self.pnts_open):
+            return False
 
-        # def get_x(pnt):
-        #     return min(pnt.get_x(), pnt.get_y())
-        self.pnts_open = sorted(self.pnts_open, key=lambda x: (x.coord[0], x.coord[1]))
-        return
+        old_position = box.bl.copy()
+        box.set_bl(pnt)
+
+        if not self.bounding_box.contains_rectangle(box):
+            box.set_bl(old_position)
+            return False
+        for bs in self.boxes_stored:
+            if bs.overlap(box) > 0:
+                box.set_bl(old_position)
+                return False
+        self.boxes_stored.append(box)
+        self.remove_open_pnts(box)
+        return True
+
+    def get_pnts_open(self):
+        return self.pnts_open
+
+    def remove_box(self, box):
+        assert box in self.boxes_stored
+        self.add_open_pnts(box)
+        self.boxes_stored.remove(box)
+
+    def add_open_pnts(self, box: Box):
+        self.pnts_open.extend(box.get_interior_points())
+
+    def remove_open_pnts(self, box: Box):
+        for bp in box.get_interior_points():
+            self.pnts_open.remove(bp)
 
     def capacity_available(self):
-        filled_capacity = 0
-        for r in self.rcts_clsd:
-            filled_capacity += r.get_a()
-        return self.box.get_a() - filled_capacity
+        return len(self.pnts_open)
 
-
-    def plot(self, showOpen=False, showPoints=True,
-             showBox=True, showGrid=False,
-             cols=None, delta=0.1, bgcol='w', fname=None, alpha=0.25):
-
-        rcts_inside  = self.rcts_clsd
-        rcts_outside = self.rcts_open if showOpen else []
-        pnts         = self.pnts_open if showPoints else []
-
-        if cols is None:
-            cols = compute_colors(len(self.rcts_clsd) + len(self.rcts_open))
-
-        plot_packing_state(self.box, rcts_inside, rcts_outside, pnts, cols,
-                           showBox, showGrid, delta, bgcol, fname, alpha=alpha)
-
-
-
-    # def plot(self, showOpen=False, showPoints=True,
-    #          showBox=True, showGrid=False,
-    #          cols=None, delta=0.1, bgcol='w', fname=None):
-    #
-    #     rcts_inside = self.rcts_clsd
-    #     rcts_outside = self.rcts_open if showOpen else []
-    #     pnts = self.pnts_open if showPoints else []
-    #
-    #     cols = compute_colors(len(self.rcts_clsd) + len(self.rcts_open))
-    #
-    #     plot_packing_state(self.box, rcts_inside, rcts_outside, pnts, cols,
-    #                        showBox, showGrid, delta, bgcol, fname)
-    #     # plot_packed_box(self.box, self.rcts_clsd, pnts,
-    #     #                 cols, showBox, showGrid, delta, bgcol, fname)
-
-
+    def get_corner(self, c: str):
+        return self.bounding_box.get_corner(c)
 
 if __name__ == '__main__':
     pass

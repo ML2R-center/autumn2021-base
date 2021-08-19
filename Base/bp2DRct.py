@@ -22,7 +22,9 @@ class Box:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-
+    def set_bl(self, new_bl: Point):
+        self.bl = new_bl
+        self.tr = self.bl + Point(self.w, self.h)
 
     def get_a(self):
         return self.a
@@ -38,6 +40,10 @@ class Box:
     
     def get_w_and_h(self):
         return (self.w, self.h)
+
+    def get_interior_points(self):
+        return [Point(i,j) for i in range(self.bl.get_x(), self.bl.get_x()+self.get_w())
+                    for j in range(self.bl.get_y(), self.bl.get_y()+self.get_h())]
 
     def contains_point(self, pnt):
         x, y = pnt.get_coord()

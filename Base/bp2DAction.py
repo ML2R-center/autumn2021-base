@@ -1,6 +1,63 @@
 
-from .bp2DState import *
+from .bp2DRct import Box
+from .bp2DState import Bin
+from .bp2DPnt import Point
 
+class State:
+    def __init__(self, nbins: int, bin_size: (int, int), boxes_open: list[Box]):
+        self.bin_size = bin_size
+        self.bins = [Bin(*self.bin_size) for _ in range(nbins)]
+        self.boxes_open  = boxes_open
+
+    def has_open_boxes(self):
+        return len(self.boxes_open) > 0
+
+    def place_box_in_bin_at_pnt(self, box, i: int, pnt):
+        # box says if object can be placed there
+        # "logic" checks if path to point is reachable
+        # TODO: here we can add constraints on the placement, eg check for "gravity" constraints
+        return self.bins[i].place_box_at_pnt(box, pnt)
+
+    def place_box_in_bin(self, box: Box, i: int):
+        '''
+        places box in bin i at the first feasible position
+        '''
+        pnts_open = self.get_open_pnts_of_bin_i(i)
+        for pnt in pnts_open:
+            if self.place_box_in_bin_at_pnt(box, i, pnt):
+                return True # placement successful
+
+        return False # box couldn't be placed
+
+    def check_if_fits_somewhere_in_box(self, box: Box, i: int):
+        box_old_bl = box.bl.copy()
+        if self.place_box_in_bin(box, i):
+            self.remove_box_from_bin(box, i)
+            box.set_bl(box_old_bl)
+            return True
+
+        return False
+
+    def remove_box_from_bin(self, box: Box, i: int):
+        return self.bins[i].remove_box(box)
+
+    def open_new_bin(self):
+        self.bins.append(Bin(*self.bin_size))
+
+    def get_open_pnts_of_bin_i(self, i: int):
+        return self.bins[i].pnts_open
+
+    def get_next_open_box(self):
+        return self.boxes_open.pop(0)
+
+    def insert_open_box(self, box: Box, i=0):
+        self.boxes_open.insert(i, box)
+
+    def append_open_box(self, box: Box):
+        self.boxes_open.append(box)
+
+    def get_bin_i(self, i: int):
+        return self.bins[i]
 
 
 
@@ -18,7 +75,7 @@ class Action:
     
     def complies_with_box(self, state): # checks whether rct is in bounds
         test = self.rct.place_at(self.pnt)
-        return state.box.contains_rectangle(test)
+        return state.area.contains_rectangle(test)
 
     def complies_with_box_content(self, state): # checks that no rcts in box overlap
         test = self.rct.place_at(self.pnt)
@@ -34,7 +91,7 @@ class Action:
         rcts_clsd = list(state.rcts_clsd) # recall that list([...])
         rcts_open = list(state.rcts_open) # creates a copy of [...]
         pnts_open = list(state.pnts_open)
-        box       = state.box
+        box       = state.area
 
         rct = self.rct
         pnt = self.pnt
@@ -59,7 +116,7 @@ class Action:
     
     @staticmethod
     def new_placing_points(rct, state):
-        box       = state.box
+        box       = state.area
         rcts_clsd = state.rcts_clsd
 
         pnt_br = rct.get_corner('br')
