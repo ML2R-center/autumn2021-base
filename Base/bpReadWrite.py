@@ -17,6 +17,7 @@ class ReadWrite:
         @param path: path to the file
         """
         state = State(0, (0, 0), [])
+        n = 0
         with open(path, "r") as file:
             first_line = True
             line_counter = 0
@@ -56,13 +57,15 @@ class ReadWrite:
                                 height = int(height)
                             except ValueError:
                                 print(f'File is not valid, in line {line_counter} {height} cannot be converted to int!')
-                            state.boxes_open.append(Box(width, height))
+                            state.boxes_open.append(Box(width, height, n=n))
+                            n += 1
                         elif len(values) == 5:
                             width, height, box_x, box_y, bin_id = values
                             while len(state.bins) < int(bin_id) + 1:
                                 state.bins.append(Bin(bin_width, bin_height))
                             validation = state.bins[int(bin_id)].place_box_at_pnt(
-                                Box(int(width), int(height)), Point(int(box_x), int(box_y)))
+                                Box(int(width), int(height)), Point(int(box_x), int(box_y)), n=n)
+                            n += 1
                             if not validation:
                                 raise IOError(
                                     f'File contains no valid configuration, in line {line_counter} the box in bin {bin_id} with size {(width, height)} and position {(box_x, box_y)} is overlapping with some other box.')
