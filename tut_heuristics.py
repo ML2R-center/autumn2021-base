@@ -6,6 +6,8 @@ from Base.bp2DState import Bin
 from Base.bp2DAction import State
 from bp_blog_entry import example_blog
 
+from Base.bpReadWrite import ReadWrite
+
 import random
 import os
 
@@ -54,8 +56,6 @@ def most_enclosed_position_assignment(state: State, box: Box):
 def single_type_heuristic(state: State, heuristic_step=most_enclosed_position_assignment, video=False):
     '''A generic heuristic that applies the same assignment step for each box'''
 
-    state = State(nbins=1, bin_size=(cont_size, cont_size), boxes_open=rcts)
-
     counter = 0
 
     while state.has_open_boxes():
@@ -75,12 +75,15 @@ def single_type_heuristic(state: State, heuristic_step=most_enclosed_position_as
 
 if __name__ == "__main__":
 
-    random.seed(666)
-    squares_only = False
-    r1, r2, cont_size = example_blog(squares_only=squares_only)
-    rcts = r1+r2
+    # random.seed(666)
+    # squares_only = False
+    # r1, r2, cont_size = example_blog(squares_only=squares_only)
+    # rcts = r1+r2
+    # state = State(1, (10, 10), rcts)
 
-    state = State(1, (10, 10), rcts)
+    state = ReadWrite.read_state(path="test_instances/test_boxes")
+    state.open_new_bin()
+
 
     if not os.path.exists("./vis"):
         os.mkdir("./vis")
