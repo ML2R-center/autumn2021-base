@@ -61,7 +61,7 @@ class Box:
                ymins <= ymino and \
                ymaxs >= ymaxo
 
-    def touches_rectangle(self, other):
+    def touches_rectangle(self, other): # TODO Bug: does not cover all cases.
         for corner in other.get_corner_list():
             if self.contains_point(corner):
                 return True
