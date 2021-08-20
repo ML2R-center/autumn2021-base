@@ -2,7 +2,6 @@ import random
 
 from typing import Tuple
 
-import Base.bp2DRct
 from Base.bp2DAction import State
 from Base.bp2DPnt import Point
 from Base.bp2DState import Bin
