@@ -42,6 +42,7 @@ class ReadWrite:
                             except ValueError:
                                 print(f'File is not valid, in line {line_counter} {height} cannot be converted to int!')
                             state.bin_size = (bin_width, bin_height)
+                            state.open_new_bin()
                         else:
                             raise IOError(f'Wrong format of first line: \n\t {line} should be of format: \n\t bin_width'
                                           f'bin_height')
@@ -64,7 +65,7 @@ class ReadWrite:
                             while len(state.bins) < int(bin_id) + 1:
                                 state.bins.append(Bin(bin_width, bin_height))
                             validation = state.bins[int(bin_id)].place_box_at_pnt(
-                                Box(int(width), int(height)), Point(int(box_x), int(box_y)), n=n)
+                                Box(int(width), int(height), n=n), Point(int(box_x), int(box_y)))
                             n += 1
                             if not validation:
                                 raise IOError(
@@ -117,15 +118,4 @@ def default_comments(state: State):
             "Unused boxes": len(state.boxes_open)}
 
 
-def random_state_generator(bin_size: Tuple[int, int], box_num: int = 100, box_width_min: int = 1, box_width_max: int = 4,
-                           box_height_min: int = 1, box_height_max: int = 4, path: str = None, seed: int = 0):
-    state = State(0, bin_size, [])
-    random.seed(seed)
-    for i in range(box_num):
-        width = random.randint(box_width_min, box_width_max)
-        height = random.randint(box_height_min, box_height_max)
-        state.boxes_open.append(Box(width, height))
-
-    if path is not None:
-        ReadWrite.write_state(path, state)
 

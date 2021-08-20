@@ -11,6 +11,7 @@ from Base.bpReadWrite import ReadWrite
 import random
 import os
 
+
 def face_intersection(b1: Box, b2: Box) -> Face2D:
     '''Check how much overlap the faces of two rectangles have. 
     Return the overlap, as a face, or return None, if there is no face intersection.'''
@@ -22,6 +23,7 @@ def face_intersection(b1: Box, b2: Box) -> Face2D:
                 max += intersection.length()
     return max
 
+
 def most_enclosed_position_in_bin(bin: Bin, box: Box) -> Point:
     '''Finds the most enclosed feasible position for box in bin.
     it returns the first open point with this property, i.e. 
@@ -31,7 +33,8 @@ def most_enclosed_position_in_bin(bin: Bin, box: Box) -> Point:
     for p in bin.get_pnts_open():
         if bin.can_place_box_at_pnt(box, p):
             box.set_bl(p)
-            enclosure = face_intersection(box, bin.bounding_box) # check for edge overlap with bounding box, ie if box is placed on side or in corner of bin
+            enclosure = face_intersection(box,
+                                          bin.bounding_box)  # check for edge overlap with bounding box, ie if box is placed on side or in corner of bin
             # TODO extremely slow and assumes that remove_box does not fiddle with box.lr and keeps the place position
             for box_stored in bin.boxes_stored:
                 enclosure += face_intersection(box, box_stored)
@@ -41,16 +44,20 @@ def most_enclosed_position_in_bin(bin: Bin, box: Box) -> Point:
     return (max, pmax)
 
 
-def most_enclosed_position_assignment(state: State, box: Box):
-        '''A placement heuristic that puts the next rectangle in the position where the longest part of its circumference touches other boxes or the bin.'''
+def most_enclosed_position_assignment(state: State, box: Box) -> int:
+    '''A placement heuristic that puts the next rectangle in the position where the longest part of its
+        circumference touches other boxes or the bin. '''
 
-        most_enclosed_positions = [(most_enclosed_position_in_bin(bin, box), i) for i, bin in enumerate(state.bins)]
-        bin_idx = sorted(most_enclosed_positions, key=lambda x: (x[0][0], len(state.bins) -x[1]), reverse=True)[0]
-        if bin_idx[0][0] != -1:
-            placement_success = state.place_box_in_bin_at_pnt(box, bin_idx[1], bin_idx[0][1])
-        else:
-            state.open_new_bin()
-            state.place_box_in_bin(box, -1)
+    most_enclosed_positions = [(most_enclosed_position_in_bin(bin, box), i) for i, bin in enumerate(state.bins)]
+    bin_idx = sorted(most_enclosed_positions, key=lambda x: (x[0][0], len(state.bins) - x[1]), reverse=True)[0]
+    if bin_idx[0][0] != -1:
+        placement_success = state.place_box_in_bin_at_pnt(box, bin_idx[1], bin_idx[0][1])
+        return bin_idx[1]
+    else:
+        state.open_new_bin()
+        state.place_box_in_bin(box, -1)
+        return len(state.bins) - 1
+
 
 
 def single_type_heuristic(state: State, heuristic_step=most_enclosed_position_assignment, video=False):
@@ -61,15 +68,15 @@ def single_type_heuristic(state: State, heuristic_step=most_enclosed_position_as
     while state.has_open_boxes():
         box = state.get_next_open_box()
 
-        heuristic_step(state, box)
+        bin_id = heuristic_step(state, box)
 
         if video:
-            for i, bin in enumerate(state.bins):
-                plot_packing_state(bin, bin.boxes_stored,
-                        pnts_open=bin.pnts_open,
-                        fname=f"./vis/_{counter}_{n}_{i}.png", alpha=1.)
+            bin = state.bins[bin_id]
+            plot_packing_state(bin, bin.boxes_stored,
+                                   pnts_open=bin.pnts_open,
+                                   fname=f"./vis/_box_{counter}_bin_{bin_id}.png", alpha=1.)
             counter += 1
-        
+
     return state
 
 
@@ -83,7 +90,6 @@ if __name__ == "__main__":
 
     state = ReadWrite.read_state(path="test_instances/test_boxes")
     state.open_new_bin()
-
 
     if not os.path.exists("./vis"):
         os.mkdir("./vis")

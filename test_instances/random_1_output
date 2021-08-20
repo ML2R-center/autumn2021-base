@@ -1,7 +1,7 @@
 % State of a bin packing problem:
 %
-% Bin number: 0
-% Total uncovered points: 0
+% Bin number: 1
+% Total uncovered points: 100
 % Total covered points: 0
 % Number of boxes: 100
 % Unused boxes: 100

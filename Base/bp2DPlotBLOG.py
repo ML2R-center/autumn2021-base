@@ -1,4 +1,4 @@
-
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 from matplotlib.patches import Rectangle
