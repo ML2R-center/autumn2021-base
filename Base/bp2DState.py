@@ -20,7 +20,9 @@ class Bin:
         # self.pnts_open = {Point(i, j) for i in range(self.w) for j in range(self.h)}
         self.pnts_open = [Point(i, j) for i in range(self.w) for j in range(self.h)]
 
-    def place_box_at_pnt(self, box: Box, pnt: Point) -> bool:
+
+    def can_place_box_at_pnt(self, box: Box, pnt: Point) -> bool:
+        '''Check if Box box can be placed at Point pnt.'''
         if pnt not in self.pnts_open:
             return False
         if box.get_a() > len(self.pnts_open):
@@ -36,9 +38,22 @@ class Bin:
             if bs.overlap(box) > 0:
                 box.set_bl(old_position)
                 return False
-        self.boxes_stored.append(box)
-        self.remove_open_pnts(box)
+        box.set_bl(old_position)       
         return True
+
+    def place_box_at_pnt(self, box: Box, pnt: Point) -> bool:
+        '''Place Box box at Point pnt. 
+        If the operation is feasible, the function modifies the set of open points and the list of stored boxes and returns True. Otherwise it does nothing and returns False.
+        '''
+        if self.can_place_box_at_pnt(box, pnt):
+            box.set_bl(pnt)
+            self.boxes_stored.append(box)
+            self.remove_open_pnts(box)
+            return True 
+        else:
+            return False
+
+
 
     def get_pnts_open(self):
         return self.pnts_open
@@ -48,10 +63,10 @@ class Bin:
         self.add_open_pnts(box)
         self.boxes_stored.remove(box)
 
-    def add_open_pnts(self, box: Box):
+    def add_open_pnts(self, box: Box): # TODO shuffles the order of open points if a box is added and then removed
         self.pnts_open.extend(box.get_interior_points())
 
-    def remove_open_pnts(self, box: Box):
+    def remove_open_pnts(self, box: Box): 
         for bp in box.get_interior_points():
             self.pnts_open.remove(bp)
 
