@@ -1,10 +1,11 @@
+from typing import List
 
 from .bp2DRct import Box
 from .bp2DState import Bin
 from .bp2DPnt import Point
 
 class State:
-    def __init__(self, nbins: int, bin_size: (int, int), boxes_open: list[Box]):
+    def __init__(self, nbins: int, bin_size: (int, int), boxes_open: List[Box]):
         self.bin_size = bin_size
         self.bins = [Bin(*self.bin_size) for _ in range(nbins)]
         self.boxes_open  = boxes_open
