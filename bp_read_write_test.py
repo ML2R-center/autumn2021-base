@@ -2,7 +2,7 @@ import Base.bp2DState
 from Base.bp2DAction import State
 from Base.bpReadWrite import ReadWrite
 from Base.bp2DRct import Box
-from Base.bpStateGenerators import random_state_generator
+from Base.bpStateGenerators import random_state_generator, state_generator
 from tut_heuristics import single_type_heuristic
 
 
@@ -22,9 +22,15 @@ def main():
     solution = single_type_heuristic(state, video=False)
     ReadWrite.write_state(path="test_instances/test_3_solution", state=solution)
 
-    random_state = random_state_generator(path="test_instances/random_1_output", bin_size=(10, 10))
+    random_state = state_generator(path="test_instances/explicit_1_output", bin_size=(10, 10), box_list=[(1, (1, 10)), (1, (1, 9)), (1, (9, 1)), (1, (1, 8)), (1, (8, 1)), (1, (1, 7)), (1, (7, 1)), (1, (1, 6)), (1, (6, 6))], seed=10)
     heuristic_state = single_type_heuristic(random_state, video=True)
+    ReadWrite.write_state(path="test_instances/explicit_1_solution", state=heuristic_state)
+
+    random_state = random_state_generator(path="test_instances/random_1_output", bin_size=(10, 10))
+    heuristic_state = single_type_heuristic(random_state, video=False)
     ReadWrite.write_state(path="test_instances/random_1_solution", state=heuristic_state)
+
+
 
 
 if __name__ == '__main__':
