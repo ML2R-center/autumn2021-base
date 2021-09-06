@@ -23,7 +23,7 @@ def example_blog(squares_only=True):
         [1, 0, 9], [1, 1, 9], [1, 2, 9], [1, 3, 9],
         [2, 4, 5], [2, 6, 5], [2, 8, 5]
     ])
-    rects1 = sort_rectangles(rects1)
+    rects1 = sort_boxes(rects1)
     rs1 = name_rectangles(rects1)
     if squares_only:
         rects2 = make_rects([
@@ -31,7 +31,7 @@ def example_blog(squares_only=True):
             [5, 5, 2], [3, 0, 5], [2, 3, 5], [1, 3, 7],
             [2, 0, 8], [2, 2, 8], [3, 4, 7], [3, 7, 7]
         ])
-        rects2 = sort_rectangles(rects2)
+        rects2 = sort_boxes(rects2)
         rs2 = name_rectangles(rects2)
     else:
         rs2 = example5()
@@ -114,15 +114,15 @@ def best_fit(rcts, cont_size=10):
     return state
 
 def best_fit_decreasing(rcts, cont_size=10):
-    rcts = sort_rectangles(rcts)
+    rcts = sort_boxes(rcts)
     return best_fit(rcts, cont_size)
 
 def next_fit_decreasing(rcts, cont_size=10):
-    rcts = sort_rectangles(rcts)
+    rcts = sort_boxes(rcts)
     return next_fit(rcts, cont_size)
 
 def first_fit_decreasing(rcts, cont_size=10):
-    rcts = sort_rectangles(rcts)
+    rcts = sort_boxes(rcts)
     return first_fit(rcts, cont_size)
 
 def random_fit(rcts, cont_size=10, n_cont=5):

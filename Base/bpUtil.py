@@ -36,7 +36,5 @@ def bounding_box_of_rectangles(rcts):
 
 
 # @staticmethod
-def sort_rectangles(rcts):
-    def get_a(rct):
-        return rct.a
-    return (sorted(rcts, key=get_a)[::-1])
+def sort_boxes(rcts, keyfkt=lambda x: x.a):
+    return sorted(rcts, key=keyfkt, reverse=True)
