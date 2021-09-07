@@ -1,3 +1,5 @@
+import time
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
@@ -51,7 +53,7 @@ def write_figure(fig, fname):
     fmt = fname.split('.')[-1]
     if fmt == 'png':
         fig.savefig(fname, facecolor=fig.get_facecolor(), edgecolor='w',
-                    papertype='letter', format=fmt, transparent=False,
+                    papertype='letter', format=fmt, transparent=True,
                     bbox_inches='tight', pad_inches=0.05, dpi=240)
     else:
         fig.savefig(fname, facecolor=fig.get_facecolor(), edgecolor='w',
@@ -63,27 +65,13 @@ def color_rct(rct):
     return ml2r_cols_list[rct.get_n() % len(ml2r_cols_list)]
 
 
-def plot_packed_box(box,  # Rectangle2D (required)
-                    rcts,  # list of Rectangle2D (can be empty [])
-                    pnts=None,  # list of Point2D
-                    cols=None,  # list of matplotlib colors
-                    showBox=True,  # flag parameter
-                    showGrid=False,  # flag parameter
-                    delta=0.1,  # figure size extension
-                    bgcol='w',  # figure background color
-                    fname=None,  # figure file name (when writing to disk)
-                    alpha=0.25):  # default alpha val
-    fig = plt.figure();
-    fig.patch.set_facecolor(bgcol)
-    axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
 
-    axs.set_axis_off()
-    axs.get_xaxis().set_visible(False)
-    axs.get_yaxis().set_visible(False)
+def fill_axis(ax, box, showGrid, showBox, delta, pnts: bool, alpha, point_size=8):
 
-    # if necessary, compute a list of matplotlib colors
-    if cols is None:
-        cols = [blu] * len(rcts)
+    ax.set_axis_off()
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+
 
     # determine extesions of box to be plotted
     xmin, ymin = box.get_corner('bl').get_coord()
@@ -91,11 +79,12 @@ def plot_packed_box(box,  # Rectangle2D (required)
 
     # if desired, plot a grid within the box
     if showGrid and box is not None:
-        for x in range(1, xmax): axs.plot((x, x), (ymin, ymax), 'k:', alpha=alpha)
-        for y in range(1, ymax + 1): axs.plot((xmin, xmax), (y, y), 'k:', alpha=alpha)
+        for x in range(1, xmax): ax.plot((x, x), (ymin, ymax), 'k:', alpha=alpha)
+        for y in range(1, ymax + 1): ax.plot((xmin, xmax), (y, y), 'k:', alpha=alpha)
 
     # plot rectangles
     rectangles = []
+    rcts = box.boxes_stored
     for i, rct in enumerate(rcts):
         x, y = rct.get_corner('bl').get_coord()
         w, h = rct.get_w_and_h()
@@ -106,28 +95,44 @@ def plot_packed_box(box,  # Rectangle2D (required)
     if rectangles:
         collection = PatchCollection(rectangles, edgecolor='k',
                                      match_original=True)
-        axs.add_collection(collection)
+        ax.add_collection(collection)
 
     # if desired, plot insertion points in list 'pnts'
-    if pnts is not None:
-        axs.plot([pnt.get_x() + 0.5 for pnt in pnts],
-                 [pnt.get_y() + 0.5 for pnt in pnts],
-                 'o', color='k', ms=8, mew=0, alpha=1.0)
+    if pnts:
+        open_pnts = box.pnts_open
+        ax.plot([pnt.get_x() + 0.5 for pnt in open_pnts],
+                 [pnt.get_y() + 0.5 for pnt in open_pnts],
+                 'o', color='k', ms=point_size, mew=0, alpha=1.0)
 
     # if desired, plot box
     if showBox:
-        axs.plot([xmin, xmin, xmax, xmax],
+        ax.plot([xmin, xmin, xmax, xmax],
                  [ymax + delta, ymin, ymin, ymax + delta], '-k', linewidth=3)
 
-    axs.set_xlim(xmin - 2 * delta, xmax + 2 * delta)
-    axs.set_ylim(ymin - 2 * delta, ymax + 2 * delta)
+    ax.set_xlim(xmin - 2 * delta, xmax + 2 * delta)
+    ax.set_ylim(ymin - 2 * delta, ymax + 2 * delta)
+
+def plot_packed_box(box,  # Rectangle2D (required)
+                    rcts,  # list of Rectangle2D (can be empty [])
+                    pnts=None,  # list of Point2D
+                    cols=None,  # list of matplotlib colors
+                    showBox=True,  # flag parameter
+                    showGrid=False,  # flag parameter
+                    delta=0.1,  # figure size extension
+                    bgcol='w',  # figure background color
+                    fname=None,  # figure file name (when writing to disk)
+                    alpha=0.25):  # default alpha val
+    fig = plt.figure()
+    fig.patch.set_facecolor(bgcol)
+    axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
+
+    fill_axis(ax=axs, box=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
 
     if fname is None:
         plt.show()
     else:
         write_figure(fig, fname)
     plt.close()
-
 
 def plot_box_and_rectangles(box,
                             rcts,
@@ -199,68 +204,69 @@ def plot_packing_state(
     fig = plt.figure();
     fig.patch.set_facecolor(bgcol)
     axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
-
-    axs.set_axis_off()
-    axs.get_xaxis().set_visible(False)
-    axs.get_yaxis().set_visible(False)
-
-    # if necessary, compute a list of matplotlib colors
-    # if cols is None:
-    #     cols = [blu] * (len(rcts_clsd) + len(rcts_open))
-
-    # determine extesions of box to be plotted
-    xmin, ymin = box.get_corner('bl').get_coord()
-    xmax, ymax = box.get_corner('tr').get_coord()
-
-    # if desired, plot a grid within the box
-    if showGrid and box is not None:
-        for x in range(1, xmax): axs.plot((x, x), (ymin, ymax), 'k:', alpha=alpha)
-        for y in range(1, ymax + 1): axs.plot((xmin, xmax), (y, y), 'k:', alpha=alpha)
-
-    # plot rectangles inside of box
-    rectangles = []
-    for i, rct in enumerate(rcts_clsd):
-        x, y = rct.get_corner('bl').get_coord()
-        w, h = rct.get_w_and_h()
-        n = rct.get_n()
-        rectangles.append(Rectangle((x, y), w, h, color=color_rct(rct), alpha=alpha))
-    if rectangles:
-        collection = PatchCollection(rectangles, edgecolor='k',
-                                     match_original=True)
-        axs.add_collection(collection)
-
-    # if desired, plot insertion points
-    if pnts_open:
-        axs.plot([pnt.get_x() + 0.5 for pnt in pnts_open],
-                 [pnt.get_y() + 0.5 for pnt in pnts_open],
-                 'o', color='k', ms=8, mew=0, alpha=1.0)
-
-    # if desired, plot box
-    if showBox:
-        axs.plot([xmin, xmin, xmax, xmax],
-                 [ymax + delta, ymin, ymin, ymax + delta], '-k', linewidth=3)
-
-    # plot rectangles outside of box
-    if rcts_open:
-        xmax += 10 * delta
-        x = xmax
-
-        rectangles = []
-        for i, rct in enumerate(rcts_open):
-            w, h = rct.get_w_and_h()
-            n = rct.get_n()
-            rectangles.append(Rectangle((x, 0), w, h, color=color_rct(rct), alpha=alpha))
-            x += w + 5 * delta
-            xmax = x
-            ymax = max(ymax, h + delta)
-
-        if rectangles:
-            collection = PatchCollection(rectangles, edgecolor='k',
-                                         match_original=True)
-            axs.add_collection(collection)
-
-    axs.set_xlim(xmin - 2 * delta, xmax + 2 * delta)
-    axs.set_ylim(ymin - 2 * delta, ymax + 2 * delta)
+    fill_axis(ax=axs, box=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
+    #
+    # axs.set_axis_off()
+    # axs.get_xaxis().set_visible(False)
+    # axs.get_yaxis().set_visible(False)
+    #
+    # # if necessary, compute a list of matplotlib colors
+    # # if cols is None:
+    # #     cols = [blu] * (len(rcts_clsd) + len(rcts_open))
+    #
+    # # determine extesions of box to be plotted
+    # xmin, ymin = box.get_corner('bl').get_coord()
+    # xmax, ymax = box.get_corner('tr').get_coord()
+    #
+    # # if desired, plot a grid within the box
+    # if showGrid and box is not None:
+    #     for x in range(1, xmax): axs.plot((x, x), (ymin, ymax), 'k:', alpha=alpha)
+    #     for y in range(1, ymax + 1): axs.plot((xmin, xmax), (y, y), 'k:', alpha=alpha)
+    #
+    # # plot rectangles inside of box
+    # rectangles = []
+    # for i, rct in enumerate(rcts_clsd):
+    #     x, y = rct.get_corner('bl').get_coord()
+    #     w, h = rct.get_w_and_h()
+    #     n = rct.get_n()
+    #     rectangles.append(Rectangle((x, y), w, h, color=color_rct(rct), alpha=alpha))
+    # if rectangles:
+    #     collection = PatchCollection(rectangles, edgecolor='k',
+    #                                  match_original=True)
+    #     axs.add_collection(collection)
+    #
+    # # if desired, plot insertion points
+    # if pnts_open:
+    #     axs.plot([pnt.get_x() + 0.5 for pnt in pnts_open],
+    #              [pnt.get_y() + 0.5 for pnt in pnts_open],
+    #              'o', color='k', ms=8, mew=0, alpha=1.0)
+    #
+    # # if desired, plot box
+    # if showBox:
+    #     axs.plot([xmin, xmin, xmax, xmax],
+    #              [ymax + delta, ymin, ymin, ymax + delta], '-k', linewidth=3)
+    #
+    # # plot rectangles outside of box
+    # if rcts_open:
+    #     xmax += 10 * delta
+    #     x = xmax
+    #
+    #     rectangles = []
+    #     for i, rct in enumerate(rcts_open):
+    #         w, h = rct.get_w_and_h()
+    #         n = rct.get_n()
+    #         rectangles.append(Rectangle((x, 0), w, h, color=color_rct(rct), alpha=alpha))
+    #         x += w + 5 * delta
+    #         xmax = x
+    #         ymax = max(ymax, h + delta)
+    #
+    #     if rectangles:
+    #         collection = PatchCollection(rectangles, edgecolor='k',
+    #                                      match_original=True)
+    #         axs.add_collection(collection)
+    #
+    # axs.set_xlim(xmin - 2 * delta, xmax + 2 * delta)
+    # axs.set_ylim(ymin - 2 * delta, ymax + 2 * delta)
 
     if fname is None:
         plt.show()
@@ -268,6 +274,74 @@ def plot_packing_state(
         write_figure(fig, fname)
     plt.close()
 
+def plot_states(bins,
+                showBox=True,  # flag parameter
+                showGrid=False,  # flag parameter
+                delta=0.1,  # figure size extension
+                bgcol='w',  # figure background color
+                dir=None,  # directory to save all images to
+                alpha=1.):  # default alpha val
+
+    if dir is None:
+        dir = f'./vis/{time.time_ns()}/'
+        os.makedirs(dir)
+
+    for i, box in enumerate(bins):
+        fig = plt.figure()
+        fig.patch.set_facecolor(bgcol)
+        axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
+        fill_axis(ax=axs, box=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
+        write_figure(fig, f'{dir}box_{i}.png')
+
+    print(f"Finished plotting, images saved to {dir}")
+
+
+
+def plot_states_on_single_image(bins, ncols=10,
+                    showBox=True,  # flag parameter
+                    showGrid=False,  # flag parameter
+                    delta=0.1,  # figure size extension
+                    bgcol='w',  # figure background color
+                    fname=None,  # figure file name (when writing to disk)
+                    alpha=.25):  # default alpha val
+    nstates: int = len(bins)
+    ncols = np.min([ncols, nstates])
+    nrows = nstates//ncols + 1
+    print(f"col: {ncols}, rows {nrows}")
+    # ratio = nrows/ncols
+    w,h = plt.figaspect(ncols/nrows)#nrows/ncols)
+    # fig, axs = plt.subplots(nrows, ncols, figsize=(w*nrows, h*nrows))
+    fig, axs = plt.subplots(nrows, ncols, figsize=(w*nrows, h*nrows), constrained_layout=True)
+    point_size = np.min([np.max([0.5, 80/ncols]), 8])
+    print(f"point_size: {point_size}")
+    if len(axs.shape) == 1:
+        axs = np.expand_dims(axs, 0)
+    for row in np.arange(nrows, dtype=np.int):
+        print(f"row {row}/{nrows}")
+        for col in np.arange(ncols, dtype=np.int):
+            print(f"col {col}/{ncols}")
+            ax = axs[row, col]
+            ax.set_axis_off()
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            ax.set_aspect(1)
+            ax.set_facecolor(bgcol)
+            idx = np.int(row*ncols + col)
+            if idx >= len(bins):
+                continue
+            print(f"bin idx {idx}")
+            bin = bins[idx]
+            # ax = fig.add_subplot(f'{row+1}{col+1}1', aspect='equal', facecolor=bgcol)
+            fill_axis(ax=ax, box=bin, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha,
+                      point_size=point_size)
+
+    # fig.tight_layout()
+    # fig.subplots_adjust(wspace=0, hspace=0)
+    write_figure(fig, 'test_fig_many_bins.pdf')
+    # plt.show()
+    print("exit plt.show()")
+
+    pass
 
 if __name__ == '__main__':
     pass
