@@ -1,21 +1,18 @@
-
 from .bp2DFce import Face2D
 from .bp2DPnt import Point
-
 
 
 class Box:
 
     def __init__(self, w, h, bl=Point(0, 0), n=None):
-        self.bl = bl                 # bottom left corner
-        self.tr = bl + Point(w, h) # top right corner
-        self.w  = int(w)             # width
-        self.h  = int(h)             # height
-        self.a  = w*h                # area
-        self.n  = n                  # number / name
+        self.bl = bl  # bottom left corner
+        self.tr = bl + Point(w, h)  # top right corner
+        self.w = int(w)  # width
+        self.h = int(h)  # height
+        self.a = w * h  # area
+        self.n = n  # number / name
         self.color = None
-        
-        
+
     def __eq__(self, other):
         return self.bl == other.bl and self.tr == other.tr
 
@@ -37,13 +34,13 @@ class Box:
 
     def get_h(self):
         return self.h
-    
+
     def get_w_and_h(self):
         return (self.w, self.h)
 
     def get_interior_points(self):
-        return [Point(i,j) for i in range(self.bl.get_x(), self.bl.get_x()+self.get_w())
-                    for j in range(self.bl.get_y(), self.bl.get_y()+self.get_h())]
+        return [Point(i, j) for i in range(self.bl.get_x(), self.bl.get_x() + self.get_w())
+                for j in range(self.bl.get_y(), self.bl.get_y() + self.get_h())]
 
     def contains_point(self, pnt):
         x, y = pnt.get_coord()
@@ -61,13 +58,13 @@ class Box:
                ymins <= ymino and \
                ymaxs >= ymaxo
 
-    def touches_rectangle(self, other): # TODO Bug: does not cover all cases.
+    def touches_rectangle(self, other):  # TODO Bug: does not cover all cases.
         for corner in other.get_corner_list():
             if self.contains_point(corner):
                 return True
         return False
 
-####
+    ####
     def get_corner(self, cname):
         if cname == 'bl': return self.bl
         if cname == 'tr': return self.tr
@@ -75,9 +72,8 @@ class Box:
         if cname == 'tl': return self.bl + Point(0, self.h)
 
     def get_corner_list(self):
-        return [self.get_corner(cname) for cname in ['bl','br','tr','tl']]
+        return [self.get_corner(cname) for cname in ['bl', 'br', 'tr', 'tl']]
 
-    
     def get_face(self, fname):
         if fname == 't': return Face2D(self.get_corner('tl'),
                                        self.get_corner('tr'))
@@ -89,29 +85,27 @@ class Box:
                                        self.get_corner('tr'))
 
     def get_face_list(self):
-        return [self.get_face(fname) for fname in ['b','r','t','l']]
+        return [self.get_face(fname) for fname in ['b', 'r', 't', 'l']]
 
-    
     def place_at(self, pnt):
         return Box(self.w, self.h, pnt, self.n)
-    
+
     def shift_by(self, vec):
         return self.place_at(self.bl + Point(*vec))
 
     def overlap(self, other):
-        xmins, ymins = self.bl.get_coord()
-        xmaxs, ymaxs = self.tr.get_coord()
-        xmino, ymino = other.bl.get_coord()
-        xmaxo, ymaxo = other.tr.get_coord()
-        xbl = max(xmins, xmino)
-        ybl = max(ymins, ymino)
-        xtr = min(xmaxs, xmaxo)
-        ytr = min(ymaxs, ymaxo)
-        if xbl <= xtr and ybl <= ytr:
-            return (xtr-xbl) * (ytr-ybl)
+        xbl = max(self.bl.get_coord()[0], other.bl.get_coord()[0])
+        xtr = min(self.tr.get_coord()[0], other.tr.get_coord()[0])
+
+        if xbl <= xtr:
+            ybl = max(self.bl.get_coord()[1], other.bl.get_coord()[1])
+            ytr = min(self.tr.get_coord()[1], other.tr.get_coord()[1])
+            if ybl <= ytr:
+                return (xtr - xbl) * (ytr - ybl)
+            else:
+                return 0
         else:
             return 0
-
 
     def interior_contains_point(self, pn):
         # same as contains_point but < instead of <= in n <= max check
@@ -121,7 +115,7 @@ class Box:
         x, y = pn.get_coord()
         xmin, ymin = self.bl.get_coord()
         xmax, ymax = self.tr.get_coord()
-        return xmin <= x < xmax and  ymin <= y < ymax # this should be wrong
+        return xmin <= x < xmax and ymin <= y < ymax  # this should be wrong
 
     def rotate90(self):
         # bl stays the same
@@ -132,8 +126,6 @@ class Box:
 
     def get_color(self):
         return self.color
-
-
 
     # @staticmethod
     # def area_of_rectangles(rcts):
@@ -157,16 +149,12 @@ class Box:
     #     ytr = np.max([rct.tr.get_y() for rct in rcts])
     #     return Box(xtr - xbl, ytr - ybl, Point(xbl, ybl))
 
-
-
     # @staticmethod
     # def sort_rectangles(rcts):
     #     def get_a(rct):
     #         return rct.a
     #     return (sorted(rcts, key=get_a)[::-1])
 
-
-    
     @staticmethod
     def place_rectangles_at_point(rcts, pnt):
         return [rct.place_at(pnt) for rct in rcts]
@@ -174,18 +162,6 @@ class Box:
     @staticmethod
     def place_rectangles_at_points(rcts, pnts):
         return [rcts[i].place_at(pnts[i]) for i in range(len(rcts))]
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
