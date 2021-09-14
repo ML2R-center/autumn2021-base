@@ -75,15 +75,15 @@ def best_fit(rcts, cont_size=10):
     return state
 
 def best_fit_decreasing(rcts, cont_size=10):
-    rcts = sort_rectangles(rcts)
+    rcts = sort_boxes(rcts)
     return best_fit(rcts, cont_size)
 
 def next_fit_decreasing(rcts, cont_size=10):
-    rcts = sort_rectangles(rcts)
+    rcts = sort_boxes(rcts)
     return next_fit(rcts, cont_size)
 
 def first_fit_decreasing(rcts, cont_size=10):
-    rcts = sort_rectangles(rcts)
+    rcts = sort_boxes(rcts)
     return first_fit(rcts, cont_size)
 
 def random_fit(rcts, cont_size=10, n_cont=5):
