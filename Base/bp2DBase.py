@@ -1,5 +1,5 @@
 
-from .bp2DRct import *
+from .bp2DBox import *
 
 
 

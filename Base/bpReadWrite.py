@@ -2,10 +2,10 @@ import random
 
 from typing import Tuple
 
-from Base.bp2DAction import State
+from Base.bp2DState import State
 from Base.bp2DPnt import Point
-from Base.bp2DState import Bin
-from Base.bp2DRct import Box
+from Base.bp2DBin import Bin
+from Base.bp2DBox import Box
 
 
 class ReadWrite:
@@ -115,7 +115,8 @@ def default_comments(state: State):
         box_num += len(bin.boxes_stored)
     return {"Bin number": len(state.bins), "Total uncovered points": uncovered_points,
             "Total covered points": covered_points, "Number of boxes": box_num,
-            "Unused boxes": len(state.boxes_open)}
+            "Unused boxes": len(state.boxes_open),
+            "Runtime": state.solution_runtime}
 
 
 

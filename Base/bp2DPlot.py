@@ -6,7 +6,7 @@ import matplotlib.colors as clr
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
 
-from .bp2DRct import *
+from Base.bp2DState import State
 
 blu = '#0059ff'  # hsv(219., 1., 1. ) = Web color blue
 ora = '#ffa500'  # hsv( 39., 1., 1. ) = Web color orange
@@ -66,7 +66,7 @@ def color_rct(rct):
 
 
 
-def fill_axis(ax, box, showGrid, showBox, delta, pnts: bool, alpha, point_size=8):
+def fill_axis(ax, bin, showGrid, showBox, delta, pnts: bool, alpha, point_size=8):
 
     ax.set_axis_off()
     ax.get_xaxis().set_visible(False)
@@ -74,18 +74,18 @@ def fill_axis(ax, box, showGrid, showBox, delta, pnts: bool, alpha, point_size=8
 
 
     # determine extesions of box to be plotted
-    xmin, ymin = box.get_corner('bl').get_coord()
-    xmax, ymax = box.get_corner('tr').get_coord()
+    xmin, ymin = bin.get_corner('bl').get_coord()
+    xmax, ymax = bin.get_corner('tr').get_coord()
 
     # if desired, plot a grid within the box
-    if showGrid and box is not None:
+    if showGrid and bin is not None:
         for x in range(1, xmax): ax.plot((x, x), (ymin, ymax), 'k:', alpha=alpha)
         for y in range(1, ymax + 1): ax.plot((xmin, xmax), (y, y), 'k:', alpha=alpha)
 
     # plot rectangles
     rectangles = []
-    rcts = box.boxes_stored
-    for i, rct in enumerate(rcts):
+    box = bin.boxes_stored
+    for i, rct in enumerate(box):
         x, y = rct.get_corner('bl').get_coord()
         w, h = rct.get_w_and_h()
         n = rct.get_n()
@@ -99,7 +99,7 @@ def fill_axis(ax, box, showGrid, showBox, delta, pnts: bool, alpha, point_size=8
 
     # if desired, plot insertion points in list 'pnts'
     if pnts:
-        open_pnts = box.pnts_open
+        open_pnts = bin.pnts_open
         ax.plot([pnt.get_x() + 0.5 for pnt in open_pnts],
                  [pnt.get_y() + 0.5 for pnt in open_pnts],
                  'o', color='k', ms=point_size, mew=0, alpha=1.0)
@@ -126,7 +126,7 @@ def plot_packed_box(box,  # Rectangle2D (required)
     fig.patch.set_facecolor(bgcol)
     axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
 
-    fill_axis(ax=axs, box=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
+    fill_axis(ax=axs, bin=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
 
     if fname is None:
         plt.show()
@@ -190,21 +190,23 @@ def plot_box_and_rectangles(box,
 
 
 def plot_packing_state(
-        box,
-        rcts_clsd,
-        rcts_open=[],
-        pnts_open=[],
-        cols=None,
+        state: State,
+        bin_id: int = -1,
+        step: int = -1,
         showBox=True,
         showGrid=False,
         delta=0.1,
         bgcol='w',
-        fname=None,
-        alpha=0.25):
-    fig = plt.figure();
-    fig.patch.set_facecolor(bgcol)
-    axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
-    fill_axis(ax=axs, box=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
+        fname=f"./vis/",
+        alpha=1):
+    if bin_id == -1:
+        for i, _ in enumerate(state.bins, 0):
+            plot_packing_state(state, i, step, showBox, showGrid, delta, bgcol, fname, alpha)
+    else:
+        fig = plt.figure()
+        fig.patch.set_facecolor(bgcol)
+        axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
+        fill_axis(ax=axs, bin=state.bins[bin_id], showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
     #
     # axs.set_axis_off()
     # axs.get_xaxis().set_visible(False)
@@ -268,11 +270,14 @@ def plot_packing_state(
     # axs.set_xlim(xmin - 2 * delta, xmax + 2 * delta)
     # axs.set_ylim(ymin - 2 * delta, ymax + 2 * delta)
 
-    if fname is None:
-        plt.show()
-    else:
-        write_figure(fig, fname)
-    plt.close()
+        if fname is None:
+            plt.show()
+        else:
+            extra = ''
+            if step != -1:
+                extra = f'_{step}'
+            write_figure(fig, f'{fname}{extra}_bin_{bin_id}.png')
+        plt.close()
 
 def plot_states(bins,
                 showBox=True,  # flag parameter
@@ -290,7 +295,7 @@ def plot_states(bins,
         fig = plt.figure()
         fig.patch.set_facecolor(bgcol)
         axs = fig.add_subplot('111', aspect='equal', facecolor=bgcol)
-        fill_axis(ax=axs, box=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
+        fill_axis(ax=axs, bin=box, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha)
         write_figure(fig, f'{dir}box_{i}.png')
 
     print(f"Finished plotting, images saved to {dir}")
@@ -332,7 +337,7 @@ def plot_states_on_single_image(bins, ncols=10,
             print(f"bin idx {idx}")
             bin = bins[idx]
             # ax = fig.add_subplot(f'{row+1}{col+1}1', aspect='equal', facecolor=bgcol)
-            fill_axis(ax=ax, box=bin, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha,
+            fill_axis(ax=ax, bin=bin, showGrid=showGrid, showBox=showBox, pnts=True, delta=delta, alpha=alpha,
                       point_size=point_size)
 
     # fig.tight_layout()

@@ -1,80 +1,170 @@
+from typing import List
 
-from .bp2DPlot import *
-from .bpUtil import *
-
-
-
-
-class Bin:
-
-    def __init__(self, w, h):
-        self.w = w
-        self.h = h
-        self.area = w*h        # box, i.e. rectangle, to be packed
-        self.pnts_open =  None
-        self.init_pnts_open()  # list of rectangles still to be placed
-        self.boxes_stored = []
-        self.bounding_box = Box(w,h, Point(0,0))
-
-    def init_pnts_open(self):
-        # self.pnts_open = {Point(i, j) for i in range(self.w) for j in range(self.h)}
-        self.pnts_open = [Point(i, j) for i in range(self.w) for j in range(self.h)]
+from Base.bp2DBin import Bin
+from Base.bp2DBox import Box
 
 
-    def can_place_box_at_pnt(self, box: Box, pnt: Point) -> bool:
-        '''Check if Box box can be placed at Point pnt.'''
-        if pnt not in self.pnts_open:
-            return False
-        if box.get_a() > len(self.pnts_open):
-            return False
+class State:
+    def __init__(self, nbins: int, bin_size: (int, int), boxes_open: List[Box]):
+        self.bin_size = bin_size
+        self.bins = [Bin(*self.bin_size) for _ in range(nbins)]
+        self.boxes_open = boxes_open
+        self.solution_runtime = None
 
-        old_position = box.bl.copy()
-        box.set_bl(pnt)
+    def has_open_boxes(self):
+        return len(self.boxes_open) > 0
 
-        if not self.bounding_box.contains_rectangle(box):
-            box.set_bl(old_position)
-            return False
-        for bs in self.boxes_stored:
-            if bs.overlap(box) > 0:
-                box.set_bl(old_position)
-                return False
-        box.set_bl(old_position)       
+    def place_box_in_bin_at_pnt(self, box, i: int, pnt):
+        # box says if object can be placed there
+        # "logic" checks if path to point is reachable
+        # TODO: here we can add constraints on the placement, eg check for "gravity" constraints
+        return self.bins[i].place_box_at_pnt(box, pnt)
+
+    def place_box_in_bin(self, box: Box, i: int):
+        '''
+        places box in bin i at the first feasible position
+        '''
+        pnts_open = self.get_open_pnts_of_bin_i(i)
+        for pnt in pnts_open:
+            if self.place_box_in_bin_at_pnt(box, i, pnt):
+                return True  # placement successful
+
+        return False  # box couldn't be placed
+
+    def check_if_fits_somewhere_in_box(self, box: Box, i: int):
+        box_old_bl = box.bl.copy()
+        if self.place_box_in_bin(box, i):
+            self.remove_box_from_bin(box, i)
+            box.move(box_old_bl)
+            return True
+
+        return False
+
+    def remove_box_from_bin(self, box: Box, i: int):
+        return self.bins[i].remove_box(box)
+
+    def open_new_bin(self):
+        self.bins.append(Bin(*self.bin_size))
+
+    def get_open_pnts_of_bin_i(self, i: int):
+        return self.bins[i].pnts_open
+
+    def get_next_open_box(self):
+        return self.boxes_open.pop(0)
+
+    def insert_open_box(self, box: Box, i=0):
+        self.boxes_open.insert(i, box)
+
+    def append_open_box(self, box: Box):
+        self.boxes_open.append(box)
+
+    def get_bin_i(self, i: int):
+        return self.bins[i]
+
+
+class Action:
+
+    def __init__(self, pnt, rct):
+        self.rct = rct  # rectangle to be placed
+        self.pnt = pnt  # point for rectangle to be placed at
+
+    def __repr__(self):
+        return 'action: r%d at (%f,%f)' % (self.rct.n, self.pnt[0], self.pnt[1])
+
+    def complies_with_box(self, state):  # checks whether rct is in bounds
+        test = self.rct.place_at(self.pnt)
+        return state.area.contains_rectangle(test)
+
+    def complies_with_box_content(self, state):  # checks that no rcts in box overlap
+        test = self.rct.place_at(self.pnt)
+        for rct in state.rcts_clsd:
+            if test.overlap(rct) > 0: return False
         return True
 
-    def place_box_at_pnt(self, box: Box, pnt: Point) -> bool:
-        '''Place Box box at Point pnt. 
-        If the operation is feasible, the function modifies the set of open points and the list of stored boxes and returns True. Otherwise it does nothing and returns False.
-        '''
-        if self.can_place_box_at_pnt(box, pnt):
-            box.set_bl(pnt)
-            self.boxes_stored.append(box)
-            self.remove_open_pnts(box)
-            return True 
-        else:
-            return False
+    def is_feasible(self, state):
+        return self.complies_with_box(state) and \
+               self.complies_with_box_content(state)
 
+    def apply_to(self, state):
+        rcts_clsd = list(state.rcts_clsd)  # recall that list([...])
+        rcts_open = list(state.rcts_open)  # creates a copy of [...]
+        pnts_open = list(state.pnts_open)
+        box = state.area
 
+        rct = self.rct
+        pnt = self.pnt
 
-    def get_pnts_open(self):
-        return self.pnts_open
+        rcts_open.remove(rct)  # works, because we overlaoded == in Rectangle2D
+        pnts_open.remove(pnt)  # works, because we overlaoded == in Point2D
 
-    def remove_box(self, box):
-        assert box in self.boxes_stored
-        self.add_open_pnts(box)
-        self.boxes_stored.remove(box)
+        rct_new = rct.place_at(pnt)
 
-    def add_open_pnts(self, box: Box): # TODO shuffles the order of open points if a box is added and then removed
-        self.pnts_open.extend(box.get_interior_points())
+        pnts_open.extend(Action.new_placing_points(rct_new,
+                                                   state))  # TODO: needed? not sure if blog entry code runs if this line is included
+        rcts_clsd.append(rct_new)
 
-    def remove_open_pnts(self, box: Box): 
-        for bp in box.get_interior_points():
-            self.pnts_open.remove(bp)
+        return Bin(rcts_clsd, rcts_open, pnts_open, box)
 
-    def capacity_available(self):
-        return len(self.pnts_open)
+    def rot_rct(self):
+        # forward method for 2DRct.rotate90()
+        self.rct.rotate90()
 
-    def get_corner(self, c: str):
-        return self.bounding_box.get_corner(c)
+    @staticmethod
+    def new_placing_points(rct, state):
+        box = state.area
+        rcts_clsd = state.rcts_clsd
+
+        pnt_br = rct.get_corner('br')
+        pnt_tl = rct.get_corner('tl')
+
+        pnts_new = []
+
+        # test w.r.t. the 1st candidate point
+        if pnt_br.get_x() < box.get_w():
+            # test if bottom face of box contains candidate point
+            if box.get_face('b').interior_contains_point(pnt_br):
+                pnts_new.append(pnt_br)
+            else:
+                touches_tr = False
+                touches_tl = False
+                # iterate over all previously packed rectangles 
+                for r in rcts_clsd:
+                    # test if top face of rectangle contains candidate
+                    if r.get_face('t').interior_contains_point(pnt_br):
+                        pnts_new.append(pnt_br)
+                        break
+
+                    if r.get_corner('tr') == pnt_br:
+                        touches_tr = True
+                    if r.get_corner('tl') == pnt_br:
+                        touches_tl = True
+                if touches_tr and touches_tl:
+                    pnts_new.append(pnt_br)
+
+        # test w.r.t. the 2nd candidate point
+        if pnt_tl.get_y() < box.get_h():
+            # test if left face of box contains candidate point
+            if box.get_face('l').interior_contains_point(pnt_tl):
+                pnts_new.append(pnt_tl)
+            else:
+                touches_br = False
+                touches_tr = False
+                # iterate over all previously packed rectangles 
+                for r in rcts_clsd:
+                    # test if right face of rectangle contains candidate
+                    if r.get_face('r').interior_contains_point(pnt_tl):
+                        pnts_new.append(pnt_tl)
+                        break
+
+                    if r.get_corner('br') == pnt_tl:
+                        touches_tr = True
+                    if r.get_corner('tr') == pnt_tl:
+                        touches_tl = True  ## TODO: bug? maybe this broke 2DRct.contains_point()?
+                if touches_br and touches_tr:
+                    pnts_new.append(pnt_tl)
+
+        return pnts_new
+
 
 if __name__ == '__main__':
     pass

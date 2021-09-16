@@ -3,8 +3,8 @@ from typing import Tuple, List
 
 import numpy.random
 
-from Base.bp2DAction import State
-from Base.bp2DRct import Box
+from Base.bp2DState import State
+from Base.bp2DBox import Box
 from Base.bpReadWrite import ReadWrite
 
 

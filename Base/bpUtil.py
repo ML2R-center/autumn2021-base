@@ -1,13 +1,15 @@
 import numpy as np
 
-from .bp2DRct import Box
+from .bp2DBox import Box
 from .bp2DPnt import Point
+from .bp2DState import State
 
 
 def name_rectangles(rcts):
     for i, r in enumerate(rcts):
         r.n = i
     return rcts
+
 
 # @staticmethod
 def area_of_rectangles(rcts):
@@ -36,5 +38,10 @@ def bounding_box_of_rectangles(rcts):
 
 
 # @staticmethod
-def sort_boxes(rcts, keyfkt=lambda x: x.a):
-    return sorted(rcts, key=keyfkt, reverse=True)
+def sort_boxes(rcts, keyfkt=lambda x: x.a, reverse=True):
+    return sorted(rcts, key=keyfkt, reverse=reverse)
+
+
+# @staticmethod
+def sort_boxes_in_state(state: State, keyfkt=lambda x: x.a, reverse=True):
+    state.boxes_open = sort_boxes(state.boxes_open, keyfkt, reverse)

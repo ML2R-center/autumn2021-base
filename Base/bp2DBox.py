@@ -1,3 +1,5 @@
+import numpy
+
 from .bp2DFce import Face2D
 from .bp2DPnt import Point
 
@@ -19,7 +21,7 @@ class Box:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def set_bl(self, new_bl: Point):
+    def move(self, new_bl: Point):
         self.bl = new_bl
         self.tr = self.bl + Point(self.w, self.h)
 
@@ -94,16 +96,11 @@ class Box:
         return self.place_at(self.bl + Point(*vec))
 
     def overlap(self, other):
-        xbl = max(self.bl.get_coord()[0], other.bl.get_coord()[0])
-        xtr = min(self.tr.get_coord()[0], other.tr.get_coord()[0])
+        bl_max = numpy.maximum(self.bl.get_coord(), other.bl.get_coord())
+        tr_min = numpy.minimum(self.tr.get_coord(), other.tr.get_coord())
 
-        if xbl <= xtr:
-            ybl = max(self.bl.get_coord()[1], other.bl.get_coord()[1])
-            ytr = min(self.tr.get_coord()[1], other.tr.get_coord()[1])
-            if ybl <= ytr:
-                return (xtr - xbl) * (ytr - ybl)
-            else:
-                return 0
+        if bl_max[0] <= tr_min[0] and bl_max[1] <= tr_min[1]:
+            return (tr_min[0] - bl_max[0]) * (tr_min[1] - bl_max[1])
         else:
             return 0
 
