@@ -14,10 +14,14 @@ def main():
         os.mkdir("./vis")
 
     # Simple examples for read and write
-    # state = ReadWrite.read_state(path="test_instances/test_1_input")
-    # ReadWrite.write_state(path="test_instances/test_1_output", state=state)
-    # solution = single_type_heuristic(state, video=False)
-    # ReadWrite.write_state(path="test_instances/test_1_solution", state=solution)
+    state = ReadWrite.read_state(path="test_instances/test_1_input")
+    ReadWrite.write_state(path="test_instances/test_1_output", state=state)
+    single_type_heuristic(state, heuristic_step=first_fit_decreasing)
+    ReadWrite.write_state(path="test_instances/test_1_solution", state=state)
+
+    state = ReadWrite.read_state(path="test_instances/test_1_input")
+    solution = ReadWrite.read_state(path="test_instances/test_1_solution")
+
     #
     # state = ReadWrite.read_state(path="test_instances/test_2_input")
     # ReadWrite.write_state(path="test_instances/test_2_output", state=state)
@@ -38,6 +42,10 @@ def main():
         single_type_heuristic(state, heuristic, plot_result=True, plot_name=name)
         ReadWrite.write_state(path=f"test_instances/solution_small_{name}", state=state)
 
+        state = ReadWrite.read_state("test_instances/state_random_big")
+        solution = ReadWrite.read_state(path=f"test_instances/solution_big_{name}")
+        print(f"Is solution of {name} valid? {solution.is_valid(state)}!")
+
     # Comparison of heuristics on random state
     random_state_generator(path="test_instances/state_random_big", bin_size=(10, 10), box_width_min=2,
                            box_num=1000)
@@ -46,6 +54,9 @@ def main():
         single_type_heuristic(state, heuristic)
         ReadWrite.write_state(path=f"test_instances/solution_big_{name}", state=state)
 
+        state = ReadWrite.read_state("test_instances/state_random_big")
+        solution = ReadWrite.read_state(path=f"test_instances/solution_big_{name}")
+        print(f"Is solution of {name} valid? {solution.is_valid(state)}!")
 
 if __name__ == '__main__':
     main()

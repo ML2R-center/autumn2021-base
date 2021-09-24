@@ -1,5 +1,7 @@
 from typing import List
 
+import numpy
+
 from Base.bp2DBin import Bin
 from Base.bp2DBox import Box
 
@@ -60,6 +62,35 @@ class State:
 
     def get_bin_i(self, i: int):
         return self.bins[i]
+
+    def compare_with_unboxed(self, state) -> bool:
+        checked = numpy.zeros(len(state.boxes_open), dtype=bool)
+        for b in self.bins:
+            for box in b.boxes_stored:
+                found = False
+                for i, unboxed in enumerate(state.boxes_open):
+                    same_width = box.get_w() == unboxed.get_w()
+                    same_height = box.get_h() == unboxed.get_h()
+                    if not checked[i] and same_width and same_height:
+                        checked[i] = True
+                        found = True
+                        break
+                if not found:
+                    return False
+
+        return True
+
+    def is_valid(self, state) -> bool:
+        if len(self.boxes_open) > 0:
+            return False
+        for b in self.bins:
+            for i, boxA in enumerate(b.boxes_stored):
+                for j, boxB in enumerate(b.boxes_stored):
+                    if i != j and boxA.overlap(boxB):
+                        return False
+        if not self.compare_with_unboxed(state):
+            return False
+        return True
 
 
 class Action:
