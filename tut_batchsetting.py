@@ -24,8 +24,8 @@ if __name__ == "__main__":
         os.mkdir("./vis")
 
     # choose some placement heuristic(s)
-    heuristic = [most_enclosed_position]
-    heur_name = ['most_enclosed']
+    heuristic = most_enclosed_position
+    heur_name = 'most_enclosed'
 
     # create different sorted copies of the list of open boxes
     # sort_boxes sorts from largest to smallest according to keys computed by keyfkt
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
         # run heuristic for a particular orting strategy
         print(f"running {heur_name}")
-        s = single_type_heuristic(new_state, heuristic_step=heuristic, plot_steps=False)
+        single_type_heuristic(new_state, heuristic_step=heuristic, plot_steps=False)
 
         # plot results
-        plot_packing_state(state=s, fname=f"./vis/{sorting_name}_{heur_name}")
+        plot_packing_state(state=new_state, fname=f"./vis/{sorting_name}_{heur_name}")
