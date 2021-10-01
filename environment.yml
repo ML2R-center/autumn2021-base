@@ -1,0 +1,7 @@
+name: autumn2021
+channels:
+  - defaults
+dependencies:
+  - matplotlib=3.4.2
+  - python=3.8.5
+  - numpy=1.20.3
