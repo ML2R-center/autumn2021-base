@@ -20,6 +20,7 @@ To activate the environment and start coding, run:
 ## Jupyter Notebook
 
 If you like to run a jupyter notebook server, just as we did, you may need to install it in your current (conda) environment.
+Of course, you can code in any other environment of your choice, that's why we did not include this dependency in the ```environment.yaml``` directly.
 
 The classic Jupyter Notebook can be installed with conda:  
 ```conda install -c conda-forge notebook```
