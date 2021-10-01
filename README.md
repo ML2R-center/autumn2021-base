@@ -1,6 +1,6 @@
 # Requirements:
 
-To install the necessary requirements, we provide a environment.yml file that can be used with anaconda. Of course you can use any other means of installing the requirements listed in this file.
+To install the necessary requirements, we provide a environment.yml file that can be used with [anaconda](https://anaconda.org/). Of course you can use any other means of installing the requirements listed in this file.
 
 The required packages are:  
 ```matplotlib=3.4.2```  
