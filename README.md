@@ -2,9 +2,9 @@
 
 To install the necessary requirements, we provide a environment.yml file that can be used with anaconda. Of course you can use any other means of installing the requirements listed in this file.
 
-The required packages are:
-matplotlib=3.4.2
-numpy=1.20.3
+The required packages are:  
+matplotlib=3.4.2  
+numpy=1.20.3  
 The code could run using older versions as well.
 
 ## Jupyter Notebook
