@@ -20,7 +20,7 @@ To run the notebook, run the following command at the Terminal:
 
 ## Conda Environment 
 
-To create an environment with a specific version of Python and the required packages:  
+To create an environment with a specific version of Python and the required packages, run the following commands:  
 
 ```conda create -n myenv python```  
 ```conda install -n myenv matplotlib=3.4.2 numpy=1.20.3```  
