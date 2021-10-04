@@ -1,3 +1,4 @@
+import datetime
 import random
 
 from typing import Tuple
@@ -113,10 +114,12 @@ def default_comments(state: State):
         uncovered_points += bin.capacity_available()
         covered_points += bin.area - bin.capacity_available()
         box_num += len(bin.boxes_stored)
+    str_date = datetime.date.today().strftime("%Y-%m-%d") + ", " + datetime.datetime.now().strftime("%H:%M:%S")
     return {"Bin number": len(state.bins), "Total uncovered points": uncovered_points,
             "Total covered points": covered_points, "Number of boxes": box_num,
             "Unused boxes": len(state.boxes_open),
-            "Runtime": state.solution_runtime}
+            "Runtime": state.solution_runtime,
+            "Run date": str_date}
 
 
 

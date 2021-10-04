@@ -33,25 +33,27 @@ def main():
     # solution = single_type_heuristic(state, video=False)
     # ReadWrite.write_state(path="test_instances/test_3_solution", state=solution)
 
-    # Comparison of heuristics on small state with boxes explicitely given
+    # Generate two different states with boxes given explicitely and random boxes
     state_generator(path="test_instances/state_small", bin_size=(10, 10),
                     box_list=[(1, (1, 10)), (1, (1, 9)), (1, (9, 1)), (1, (1, 8)), (1, (8, 1)),
                               (1, (1, 7)), (1, (7, 1)), (1, (1, 6)), (1, (6, 6))], seed=10)
-    for name, heuristic in get_all_heuristics():
-        state = ReadWrite.read_state("test_instances/state_small")
-        single_type_heuristic(state, heuristic, plot_result=True, plot_name=name)
-        ReadWrite.write_state(path=f"test_instances/solution_small_{name}", state=state)
-
-        state = ReadWrite.read_state("test_instances/state_random_big")
-        solution = ReadWrite.read_state(path=f"test_instances/solution_big_{name}")
-        print(f"Is solution of {name} valid? {solution.is_valid(state)}!")
-
-    # Comparison of heuristics on random state
     random_state_generator(path="test_instances/state_random_big", bin_size=(10, 10), box_width_min=2,
                            box_num=1000)
-    for name, heuristic in get_all_heuristics():
+
+    # Comparison of heuristics on state_small
+    for name, heuristic, sorting in get_all_heuristics():
+        state = ReadWrite.read_state("test_instances/state_small")
+        single_type_heuristic(state=state, heuristic_step=heuristic, sorting=sorting, plot_result=True, plot_name=name)
+        ReadWrite.write_state(path=f"test_instances/solution_small_{name}", state=state)
+
+        state = ReadWrite.read_state("test_instances/state_small")
+        solution = ReadWrite.read_state(path=f"test_instances/solution_small_{name}")
+        print(f"Is solution of {name} valid? {solution.is_valid(state)}!")
+
+    # Comparison of heuristics on state_random_big
+    for name, heuristic, sorting in get_all_heuristics():
         state = ReadWrite.read_state("test_instances/state_random_big")
-        single_type_heuristic(state, heuristic)
+        single_type_heuristic(state=state, heuristic_step=heuristic, sorting=sorting)
         ReadWrite.write_state(path=f"test_instances/solution_big_{name}", state=state)
 
         state = ReadWrite.read_state("test_instances/state_random_big")

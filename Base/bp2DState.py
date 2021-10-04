@@ -63,32 +63,51 @@ class State:
     def get_bin_i(self, i: int):
         return self.bins[i]
 
-    def compare_with_unboxed(self, state) -> bool:
-        checked = numpy.zeros(len(state.boxes_open), dtype=bool)
+    def get_all_boxes(self) -> List[Box]:
+        all_boxes = [box for box in self.boxes_open]
         for b in self.bins:
             for box in b.boxes_stored:
-                found = False
-                for i, unboxed in enumerate(state.boxes_open):
-                    same_width = box.get_w() == unboxed.get_w()
-                    same_height = box.get_h() == unboxed.get_h()
-                    if not checked[i] and same_width and same_height:
-                        checked[i] = True
-                        found = True
-                        break
-                if not found:
-                    return False
+                all_boxes.append(box)
+        return all_boxes
 
+    def compare_states(self, state):
+        state1_boxes = state.get_all_boxes()
+        state2_boxes = self.get_all_boxes()
+        if len(state1_boxes) != len(state2_boxes):
+            return False
+        checked = numpy.zeros(len(state2_boxes), dtype=bool)
+        for i, box1 in enumerate(state1_boxes):
+            found = False
+            for j, box2 in enumerate(state2_boxes):
+                same_width = box1.get_w() == box2.get_w()
+                same_height = box1.get_h() == box2.get_h()
+                if not checked[i] and same_width and same_height:
+                    checked[i] = True
+                    found = True
+                    break
+            if not found:
+                return False
+        return numpy.all(checked)
+
+    def box_overlap_check(self):
+        for b in self.bins:
+            for i, boxA in enumerate(b.boxes_stored):
+                if not b.bounding_box.contains_rectangle(boxA):
+                    return False
+                for j, boxB in enumerate(b.boxes_stored):
+                    if i != j and boxA.overlap(boxB):
+                        return False
         return True
 
     def is_valid(self, state) -> bool:
         if len(self.boxes_open) > 0:
+            print(f'Please pack the boxes {self.boxes_open} in some bin!')
             return False
-        for b in self.bins:
-            for i, boxA in enumerate(b.boxes_stored):
-                for j, boxB in enumerate(b.boxes_stored):
-                    if i != j and boxA.overlap(boxB):
-                        return False
-        if not self.compare_with_unboxed(state):
+        if not self.box_overlap_check():
+            print(f'Some boxes are overlapping!')
+            return False
+        if not self.compare_states(state):
+            print(f'The states are not equal')
             return False
         return True
 
