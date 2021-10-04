@@ -6,6 +6,7 @@ import numpy.random
 from Base.bp2DState import State
 from Base.bp2DBox import Box
 from Base.bpReadWrite import ReadWrite
+from Base.bp2DPnt import Point
 
 
 def state_generator(bin_size: Tuple[int, int], box_list: List[Tuple[int, Tuple[int, int]]], path: str = None, seed: int = 0):
